@@ -1,0 +1,19 @@
+trigger: none
+
+schedules:
+# - cron: "*/10 * * * *"
+- cron: "30 18 * * *" # 12 AM
+# - cron: "* * * * *" #every min
+  displayName: Test Scheduled Success
+  branches:
+    include:
+    - main
+  always: true
+
+pool: datadog
+
+steps:
+- script: |
+    echo "Simulating scheduled success"
+    exit 0
+  displayName: Force Success

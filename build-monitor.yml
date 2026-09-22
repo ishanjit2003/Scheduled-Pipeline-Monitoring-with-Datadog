@@ -1,0 +1,54 @@
+trigger: none
+
+variables:
+- group: Monitoring-Secrets
+
+schedules:
+- cron: "30 19 * * *"
+  displayName: Daily Scheduled Pipeline Monitoring
+  branches:
+    include:
+    - main
+  always: true
+
+pool: datadog
+
+steps:
+
+- powershell: |
+    $Python = "C:\Program Files\Python311\python.exe"
+
+    Write-Host "Using Python: $Python"
+
+    if (-not (Test-Path $Python)) {
+        Write-Error "Python not found at $Python"
+        exit 1
+    }
+
+    & $Python --version
+    & $Python -m pip --version
+  displayName: Verify Python
+
+- powershell: |
+    $Python = "C:\Program Files\Python311\python.exe"
+
+    & $Python -m pip install --upgrade pip
+    & $Python -m pip install -r monitoring/requirements.txt
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+  displayName: Install Dependencies
+
+- powershell: |
+    $Python = "C:\Program Files\Python311\python.exe"
+
+    & $Python monitoring/build-monitor.py
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+  displayName: Monitor Scheduled Failures
+  env:
+    AZDO_PAT: $(AZDO_PAT)
+    DD_API_KEY: $(DD_API_KEY)

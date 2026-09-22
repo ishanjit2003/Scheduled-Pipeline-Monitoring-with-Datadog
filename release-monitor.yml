@@ -1,0 +1,32 @@
+trigger: none
+
+variables:
+- group: Monitoring-Secrets
+
+schedules:
+- cron: "30 21 * * *"
+  displayName: Daily Scheduled Release Monitoring
+  branches:
+    include:
+    - main
+  always: true
+
+pool: datadog
+
+steps:
+
+- powershell: |
+    py -3.11 --version
+  displayName: Verify Python
+
+- powershell: |
+    py -3.11 -m pip install --upgrade pip
+    py -3.11 -m pip install requests
+  displayName: Install Dependencies
+
+- powershell: |
+    py -3.11 monitoring/release-monitor.py
+  displayName: Monitor Scheduled Release Failures
+  env:
+    AZDO_PAT: $(AZDO_PAT)
+    DD_API_KEY: $(DD_API_KEY)
